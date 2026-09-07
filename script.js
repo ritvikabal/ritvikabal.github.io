@@ -47,36 +47,52 @@ document.getElementById("year").textContent = new Date().getFullYear();
   targets.forEach((el) => io.observe(el));
 })();
 
-// Leadership photo carousel — cross-fades between slides, no sliding.
+// Awards carousel — cards slide so the current one is centered and sharp;
+// neighboring cards stay visible but blurred.
 (function () {
-  const carousel = document.getElementById("leadership-carousel");
-  if (!carousel) return;
+  const root = document.getElementById("awards-carousel");
+  if (!root) return;
 
-  const slides = Array.from(carousel.querySelectorAll(".carousel-slide"));
-  const dotsWrap = carousel.querySelector(".carousel-dots");
-  if (!slides.length) return;
+  const viewport = root.querySelector(".awards-viewport");
+  const track = root.querySelector(".awards-track");
+  const cards = Array.from(track.children);
+  const dotsWrap = root.querySelector(".awards-dots");
+  if (!cards.length) return;
 
-  let current = slides.findIndex((s) => s.classList.contains("is-active"));
+  let current = cards.findIndex((c) => c.classList.contains("is-current"));
   if (current < 0) current = 0;
 
-  slides.forEach((_, i) => {
+  cards.forEach((_, i) => {
     const dot = document.createElement("button");
     dot.type = "button";
-    dot.className = "carousel-dot" + (i === current ? " is-active" : "");
-    dot.setAttribute("aria-label", "Go to photo " + (i + 1));
+    dot.className = "awards-dot" + (i === current ? " is-current" : "");
+    dot.setAttribute("aria-label", "Go to award " + (i + 1));
     dot.addEventListener("click", () => goTo(i));
     dotsWrap.appendChild(dot);
   });
   const dots = Array.from(dotsWrap.children);
 
-  function goTo(index) {
-    slides[current].classList.remove("is-active");
-    dots[current].classList.remove("is-active");
-    current = (index + slides.length) % slides.length;
-    slides[current].classList.add("is-active");
-    dots[current].classList.add("is-active");
+  function update() {
+    const cardWidth = cards[0].getBoundingClientRect().width;
+    const trackStyle = getComputedStyle(track);
+    const gap = parseFloat(trackStyle.columnGap || trackStyle.gap || "0") || 0;
+    const step = cardWidth + gap;
+    const viewportWidth = viewport.clientWidth;
+    const offset = viewportWidth / 2 - cardWidth / 2 - current * step;
+
+    track.style.transform = "translateX(" + offset + "px)";
+    cards.forEach((card, i) => card.classList.toggle("is-current", i === current));
+    dots.forEach((dot, i) => dot.classList.toggle("is-current", i === current));
   }
 
-  carousel.querySelector(".carousel-prev").addEventListener("click", () => goTo(current - 1));
-  carousel.querySelector(".carousel-next").addEventListener("click", () => goTo(current + 1));
+  function goTo(index) {
+    current = (index + cards.length) % cards.length;
+    update();
+  }
+
+  root.querySelector(".awards-prev").addEventListener("click", () => goTo(current - 1));
+  root.querySelector(".awards-next").addEventListener("click", () => goTo(current + 1));
+  window.addEventListener("resize", update);
+
+  update();
 })();
