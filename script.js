@@ -46,3 +46,37 @@ document.getElementById("year").textContent = new Date().getFullYear();
   );
   targets.forEach((el) => io.observe(el));
 })();
+
+// Leadership photo carousel — cross-fades between slides, no sliding.
+(function () {
+  const carousel = document.getElementById("leadership-carousel");
+  if (!carousel) return;
+
+  const slides = Array.from(carousel.querySelectorAll(".carousel-slide"));
+  const dotsWrap = carousel.querySelector(".carousel-dots");
+  if (!slides.length) return;
+
+  let current = slides.findIndex((s) => s.classList.contains("is-active"));
+  if (current < 0) current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "carousel-dot" + (i === current ? " is-active" : "");
+    dot.setAttribute("aria-label", "Go to photo " + (i + 1));
+    dot.addEventListener("click", () => goTo(i));
+    dotsWrap.appendChild(dot);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function goTo(index) {
+    slides[current].classList.remove("is-active");
+    dots[current].classList.remove("is-active");
+    current = (index + slides.length) % slides.length;
+    slides[current].classList.add("is-active");
+    dots[current].classList.add("is-active");
+  }
+
+  carousel.querySelector(".carousel-prev").addEventListener("click", () => goTo(current - 1));
+  carousel.querySelector(".carousel-next").addEventListener("click", () => goTo(current + 1));
+})();
